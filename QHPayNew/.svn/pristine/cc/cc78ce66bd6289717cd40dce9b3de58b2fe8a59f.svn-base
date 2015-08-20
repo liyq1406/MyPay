@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+	<array>
+		<string>开户人信息</string>
+		<dict>
+			<key>labelText</key>
+			<string>姓名：</string>
+		</dict>
+		<dict>
+			<key>labelText</key>
+			<string>身份证：</string>
+		</dict>
+		<dict>
+			<key>labelText</key>
+			<string>预留信息：</string>
+		</dict>
+	</array>
+	<array>
+		<string>银行信息</string>
+		<dict>
+			<key>labelText</key>
+			<string>结算银行：</string>
+		</dict>
+		<dict>
+			<key>labelText</key>
+			<string>户名：</string>
+		</dict>
+		<dict>
+			<key>labelText</key>
+			<string>商户名：</string>
+		</dict>
+	</array>
+	<array>
+		<string>地址信息</string>
+		<dict>
+			<key>labelText</key>
+			<string>所在省份：</string>
+		</dict>
+		<dict>
+			<key>labelText</key>
+			<string>经营地址：</string>
+		</dict>
+	</array>
+</array>
+</plist>

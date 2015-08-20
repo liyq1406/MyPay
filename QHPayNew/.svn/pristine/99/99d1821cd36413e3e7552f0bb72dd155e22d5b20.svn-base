@@ -1,0 +1,295 @@
+//
+//  YRTransactionTool.m
+//  YunRichMPCR
+//
+//  Created by YunRich on 15/4/21.
+//  Copyright (c) 2015年 YunRich. All rights reserved.
+//
+
+#import "YRTransactionTool.h"
+#import "YRRequestTool.h"
+#import "YRLoginManager.h"
+#import "YRMainKey.h"
+#import "YRRequestDeviceTool.h"
+#import "YRWorkKey.h"
+#import "YRICPublicKey.h"
+#import "YRRequestDeviceTool.h"
+#import "YRICParameter.h"
+#import "YRDeviceRelative.h"
+#import "YRTransactionMessage.h"
+#import "MBProgressHUD+MJ.h"
+
+@interface YRTransactionTool () <UIAlertViewDelegate>
+
+@end
+
+@implementation YRTransactionTool
+
+#pragma mark 发送9006
++(void)requestFor9006success:(void (^)(id responseObject))success failure:(void (^)(NSString * errInfo))failure{
+    [YRRequestTool send9006WithPR:@"9006" psEQ:[[YRLoginManager shareLoginManager] PSEQ] mobType:@"M" machineType:[[YRLoginManager shareLoginManager] deviceType] factory:[YRLoginManager shareLoginManager].factoryName machineNO:[[YRLoginManager shareLoginManager] productSN] isNeedHMS:@"Y"
+    success:^(id responseObject) {
+        success(responseObject);
+    } failure:^(NSString * errInfo) {
+        failure(errInfo);
+    }];
+}
+
+#pragma mark 发送9007
++ (void)requestFor9007success:(void (^)(id responseObject))success failure:(void (^)(NSString * errInfo))failure{
+    YRLoginManager * loginManager = [YRLoginManager shareLoginManager];
+    NSString * PSEQ = loginManager.PSEQ;
+    YRDeviceRelative * deviceRelative = [YRDeviceRelative shareDeviceRelative];
+    NSString * posDeviceId = deviceRelative.posDeviceId;
+    [YRRequestTool send9007WithPR:@"9007" PSEQ:PSEQ POSDEVID:posDeviceId success:^(id responseObject) {
+        
+        success(responseObject);
+    } failure:^(NSString * errInfo) {
+        failure(errInfo);
+    }];
+    
+    
+}
+
+#pragma mark 发送9008
++ (void)requestFor9008success:(void (^)(id responseObject))success failure:(void (^)(NSString * errInfo))failure{
+    YRLoginManager * loginManager = [YRLoginManager shareLoginManager];
+    NSString * PSEQ = loginManager.PSEQ;
+    YRDeviceRelative * deviceRelative = [YRDeviceRelative shareDeviceRelative];
+    NSString * posDeviceId = deviceRelative.posDeviceId;
+    NSString * posID = deviceRelative.posId;
+    [YRRequestTool send9008WithPR:@"9008" PSEQ:PSEQ POSDEVID:posDeviceId POSID:posID
+    success:^(id responseObject) {
+        success(responseObject);
+    } failure:^(NSString * errInfo) {
+        failure(errInfo);
+    }];
+};
+
+#pragma mark 发送9009
++ (void)requestFor9009success:(void (^)(id responseObject))success failure:(void (^)(NSString * errInfo))failure{
+//
+    YRLoginManager * loginManager = [YRLoginManager shareLoginManager];
+    NSString * PSEQ = loginManager.PSEQ;
+    YRDeviceRelative * deviceRelative = [YRDeviceRelative shareDeviceRelative];
+    NSString * posID = deviceRelative.posId;
+    [YRRequestTool send9009WithPR:@"9009" PSEQ:PSEQ POSID:posID BATCHID:@"000001"
+    success:^(id responseObject) {
+        success(responseObject);
+    } failure:^(NSString * errInfo) {
+        failure(errInfo);
+    }];
+}
+
+#pragma mark 发送9015
++ (void)requestFor9015WithINXNum:(int)INXNum success:(void (^)(id responseObject))success failure:(void (^)(NSString * errInfo))failure{
+    YRLoginManager * loginManager = [YRLoginManager shareLoginManager];
+    NSString * PSEQ = loginManager.PSEQ;
+    YRDeviceRelative * deviceRelative = [YRDeviceRelative shareDeviceRelative];
+    NSString * posID = deviceRelative.posId;
+    
+    NSString * INX = [NSString stringWithFormat:@"%d",INXNum];
+    if (INX.length == 1) {//判断长度是否为1，在字符串前面加0
+        INX = [NSString stringWithFormat:@"0%@",INX];
+    }
+    int newINXNum = INXNum;
+    
+    newINXNum ++;
+    
+    [YRRequestTool send9015WithPR:@"9015" PSEQ:PSEQ POSID:posID INX:INX success:^(id responseObject) {
+        YRICPublicKey * publicKey = responseObject[@"data"];
+        int keyCount = [publicKey.KEYCNT intValue];
+        //导入IC卡公钥
+        [YRRequestDeviceTool downloadPublicKey:publicKey.PUBKEY num:INXNum success:^{
+            if (newINXNum <= keyCount) {
+                [self requestFor9015WithINXNum:newINXNum success:^(id responseObject) {
+                    success(responseObject);
+                } failure:^(NSString * errInfo) {
+                    failure(errInfo);
+                }];
+            }else{
+                success(responseObject);
+            }
+
+        } failure:^(NSString *errInfo) {
+            failure(errInfo);
+        }];
+    } failure:^(NSString * errInfo) {
+        failure(errInfo);
+    }];
+    
+}
+
+#pragma mark 发送9016
++ (void)requestFor9016WithINXNum:(int)INXNum success:(void (^)(id responseObject))success failure:(void (^)(NSString * errInfo))failure{
+    YRLoginManager * loginManager = [YRLoginManager shareLoginManager];
+    NSString * PSEQ = loginManager.PSEQ;
+    YRDeviceRelative * deviceRelative = [YRDeviceRelative shareDeviceRelative];
+    NSString * posID = deviceRelative.posId;
+    
+    NSString * INX = [NSString stringWithFormat:@"%d",INXNum];
+    if (INX.length == 1) {//判断长度是否为1，在字符串前面加0
+        INX = [NSString stringWithFormat:@"0%@",INX];
+    }
+    int newINXNum = INXNum;
+    
+    newINXNum ++;
+    
+    [YRRequestTool send9016WithPR:@"9016" PSEQ:PSEQ POSID:posID INX:INX success:^(id responseObject) {
+        YRICParameter * parameter = responseObject[@"data"];
+        NSInteger paraCount = [parameter.PARACNT integerValue];
+        //导入IC卡参数
+        [YRRequestDeviceTool downloadAid:parameter.PARA num:INXNum success:^{
+            if (newINXNum <= paraCount) {
+                
+                [self requestFor9016WithINXNum:newINXNum success:^(id responseObject) {
+                    success(responseObject);
+                } failure:^(NSString * errInfo) {
+                    failure(errInfo);
+                }];
+            }else{
+                success(responseObject);
+            }
+
+        } failure:^(NSString *errInfo) {
+            failure(errInfo);
+        }];
+        
+    } failure:^(NSString * errInfo) {
+        failure(errInfo);
+    }];
+}
+
+#pragma mark TC上送9017
++ (void)requestFor9017WithCardNumPlain:(NSString *)cardNumPlain moneyNum:(NSString *)moneyNum PSEQ:(NSString *)PSEQ ICData:(NSString *)icData orderNum:(NSString *)orderNum success:(void (^)(id responseObject))success failure:(void (^)(NSString * errInfo))failure {
+    YRDeviceRelative * deviceRelative = [YRDeviceRelative shareDeviceRelative];
+    NSString * posID = deviceRelative.posId;
+    NSString * pan = [self encryptCardNum:cardNumPlain];//将银行卡生成星号
+    [YRRequestTool send9017WithPAN:pan PR:@"9017" moneyNum:moneyNum PSEQ:PSEQ POSID:posID ICData:icData orderNum:orderNum success:^(id responseObject) {
+        success(responseObject);
+    } failure:^(NSString *errInfo) {
+        failure(errInfo);
+    }];
+}
+
+#pragma mark 发送1001
+- (void)requestFor1001WithCardNumPlain:(NSString *)cardNumPlain moneyNum:(NSString *)moneyNum PSEQ:(NSString *)PSEQ  EXP:(NSString *)EXP ICSEQ:(NSString *)ICSEQ SVR:(NSString *)SVR SENS:(NSString *)SENS IC:(NSString *)IC success:(void (^)(id responseObject))success failure:(void (^)(NSString * errInfo))failure{
+    
+    YRLoginManager * loginManager = [YRLoginManager shareLoginManager];
+    YRDeviceRelative * deviceRelative = [YRDeviceRelative shareDeviceRelative];
+
+    NSString * posID = deviceRelative.posId;
+    NSString * pan = [self encryptCardNum:cardNumPlain];//将银行卡生成星号
+    NSString * orderID = [self generateOrderNumberWithPosId:posID transactionFlowNum:PSEQ];
+    
+    NSString * custID = loginManager.custID;
+    
+    NSString * latitude = loginManager.latitudeStr;
+    NSString * longitude = loginManager.longitudeStr;
+    
+    [YRRequestTool send1001WithPR:@"1001" PAN:pan AMT:moneyNum PSEQ:PSEQ EXP:EXP SVR:SVR ICSEQ:ICSEQ SENS:SENS POSID:posID ORDID:orderID IC:IC LONGITUDE:longitude LATITUDE:latitude CUSTID:custID success:^(id responseObject) {
+        
+        [MBProgressHUD hideHUD];
+        NSString * channel = [SFHFKeychainManager loadValueForKey:YR_DEVICE_CHANNEL];
+        if ([channel isEqualToString:YR_DEVICE_CHANNEL_VALUE_BLUETOOTH]) {
+            if ([responseObject[YR_OUTPUT_KEY_STATES_RESP_CODE] isEqualToString:YR_STATIC_SUCCESS_STATES_CODE]) { 
+                [[LandiMPOS getInstance] displayLines:@"交易成功！" Row:2 Col:5 Timeout:5 ClearScreen:CLEARFLAG_YES successBlock:^{
+                    success(responseObject);
+                } failedBlock:^(NSString *errCode, NSString *errInfo) {
+                    [MBProgressHUD hideHUD];
+                    [YRFunctionTools setAlertViewWithTitle:errInfo buttonTitle:TIPS_CONFIRM];
+                }];
+            }else {
+                success(responseObject);
+                [YRFunctionTools displayMessage:responseObject[YR_OUTPUT_KEY_STATES_RESP_DESC]];
+            }
+        }
+        else if ([channel isEqualToString:YR_DEVICE_CHANNEL_VALUE_AUDIOJACK]) {
+            success(responseObject);
+        }
+        
+    } failure:^(NSString * errInfo) {
+    
+        failure(errInfo);
+    }];
+    
+    [self savePSEQWithPESQ:PSEQ];
+    
+    
+}
+
+- (void)setHUDHidden:(NSString *)info {
+    
+    [MBProgressHUD hideHUD];
+    [YRFunctionTools showAlertViewTitle:@"交易错误" message:info cancelButton:TIPS_CONFIRM];
+}
+
+- (void)savePSEQWithPESQ:(NSString *)PSEQ{
+    YRRequestDeviceTool * savePSEQ = [[YRRequestDeviceTool alloc]init];
+    [savePSEQ hanlePOSFlowNumber:PSEQ operationType:HandleFlowNumberType_Save successBlock:^(NSString *serialNO) {
+        
+    } failureBlock:^(NSString *errInfo) {
+        
+    }];
+}
+
+#pragma mark 生成卡号星号
+- (NSString *)encryptCardNum:(NSString *)cardNum{
+    
+    NSRange range = NSMakeRange(6, cardNum.length - 10);
+    NSUInteger cardLen = [cardNum substringWithRange:range].length;
+    NSMutableString * starString = [[NSMutableString alloc] init];
+    for (NSUInteger i = 0; i < cardLen; i++) {
+        [starString appendString:@"*"];
+    }
+    
+    return [cardNum stringByReplacingCharactersInRange:range withString:starString] ;
+}
+
+#pragma mark 生成订单号  需传入 posID 和 流水号
+- (NSString *)generateOrderNumberWithPosId:(NSString *)posId transactionFlowNum:(NSString *)flowNum {
+    if (posId && flowNum) {
+        NSDateFormatter * dateFormatter = [[NSDateFormatter alloc] init];
+        [dateFormatter setDateFormat:@"yyyyMMdd"];
+        NSString * dateStr = [dateFormatter stringFromDate:[NSDate date]];
+        NSString * orderNum = [NSString stringWithFormat:@"%@%@%@",dateStr,posId,flowNum];
+        return orderNum;
+    }
+    return nil;
+}
+
++ (void)savePSEQWithPESQ:(NSString *)PSEQ{
+    YRRequestDeviceTool * savePSEQ = [[YRRequestDeviceTool alloc]init];
+    [savePSEQ hanlePOSFlowNumber:PSEQ operationType:HandleFlowNumberType_Save successBlock:^(NSString *serialNO) {
+        
+    } failureBlock:^(NSString *errInfo) {
+        
+    }];
+}
+
+#pragma mark 生成卡号星号
++ (NSString *)encryptCardNum:(NSString *)cardNum{
+    
+    NSRange range = NSMakeRange(6, cardNum.length - 10);
+    NSUInteger cardLen = [cardNum substringWithRange:range].length;
+    NSMutableString * starString = [[NSMutableString alloc] init];
+    for (NSUInteger i = 0; i < cardLen; i++) {
+        [starString appendString:@"*"];
+    }
+    
+    return [cardNum stringByReplacingCharactersInRange:range withString:starString] ;
+}
+
+#pragma mark 生成订单号  需传入 posID 和 流水号
++ (NSString *)generateOrderNumberWithPosId:(NSString *)posId transactionFlowNum:(NSString *)flowNum {
+    if (posId && flowNum) {
+        NSDateFormatter * dateFormatter = [[NSDateFormatter alloc] init];
+        [dateFormatter setDateFormat:@"yyyyMMdd"];
+        NSString * dateStr = [dateFormatter stringFromDate:[NSDate date]];
+        NSString * orderNum = [NSString stringWithFormat:@"%@%@%@",dateStr,posId,flowNum];
+        return orderNum;
+    }
+    return nil;
+}
+
+@end
